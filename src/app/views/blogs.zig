@@ -1,6 +1,8 @@
 const std = @import("std");
 const jetzig = @import("jetzig");
 
+pub const layout = "application";
+
 pub fn index(request: *jetzig.Request) !jetzig.View {
     const query = jetzig.database.Query(.Blog).select(.{ .id, .title });
     const blogs = try request.repo.all(query);
@@ -12,7 +14,9 @@ pub fn index(request: *jetzig.Request) !jetzig.View {
 }
 
 pub fn get(id: []const u8, request: *jetzig.Request) !jetzig.View {
-    const query = jetzig.database.Query(.Blog).find(id);
+    const query = jetzig.database.Query(.Blog)
+        .include(.comments, .{ .order_by = .{ .created_at = .desc } })
+        .find(id);
     if (try request.repo.execute(query)) |blog| {
         var root = try request.data(.object);
         try root.put("blog", blog);
